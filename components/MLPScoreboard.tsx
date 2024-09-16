@@ -8,8 +8,8 @@ import Team2 from "@/images/nyhustlers.png";
 import Image from "next/image";
 
 export default function MLPScoreboard() {
-  const [matchScore, setMatchScore] = useState({ team1: 7, team2: 12 });
-  const [teamScores, setTeamScores] = useState({ team1: 1, team2: 1 });
+  const [matchScore, setMatchScore] = useState({ team1: 12, team2: 12 });
+  const [teamScores, setTeamScores] = useState({ team1: 0, team2: 0 });
   const [gamePoint, setGamePoint] = useState(false);
 
   useEffect(() => {
@@ -36,10 +36,10 @@ export default function MLPScoreboard() {
   };
 
   return (
-    <Card className="w-full max-w-4xl bg-gray-900 text-white p-6">
+    <Card className="w-full max-w-4xl text-white bg-gray-900 p-6">
       <CardContent className="flex flex-col items-center">
         <div className="flex justify-between items-center w-full mb-6">
-          <div className="text-9xl font-bold w-1/3 text-right pr-4">
+          <div className="text-9xl font-bold w-1/3 text-right text-mlp pr-4">
             {matchScore.team1}
           </div>
           <div className="w-1/3 flex justify-center">
@@ -51,7 +51,7 @@ export default function MLPScoreboard() {
               className="object-contain"
             />
           </div>
-          <div className="text-9xl font-bold w-1/3 text-left pl-4">
+          <div className="text-9xl font-bold w-1/3 text-left text-mlp pl-4">
             {matchScore.team2}
           </div>
         </div>
@@ -90,13 +90,15 @@ export default function MLPScoreboard() {
             <span className="font-semibold">Game Point</span>
           </div>
         )}
-        <div className="flex justify-evenly w-full">
-          <h1 className="text-2xl p-5 font-bold">Player Name / Player Name</h1>
-          <h1 className="text-2xl p-5 font-bold">Player Name / Player Name</h1>
-        </div>
-        <div className="flex justify-evenly w-full">
-          <h1 className="text-2xl p-5 font-semibold text-blue-500">Carolina Pickleball Club</h1>
-          <h1 className="text-2xl p-5 font-semibold text-blue-500">New York Hustlers</h1>
+        <div className="flex justify-between w-full">
+          <div className="w-1/2 flex flex-col items-center">
+            <h1 className="text-2xl p-5 font-bold text-center">Ben Johns / Collin Johns</h1>
+            <h1 className="text-2xl p-5 font-semibold text-blue-500 text-center">Carolina Pickleball Club</h1>
+          </div>
+          <div className="w-1/2 flex flex-col items-center">
+            <h1 className="text-2xl p-5 font-bold text-center">Carson Klinger / Jack Sock</h1>
+            <h1 className="text-2xl p-5 font-semibold text-blue-500 text-center">New York Hustlers</h1>
+          </div>
         </div>
       </CardContent>
     </Card>
