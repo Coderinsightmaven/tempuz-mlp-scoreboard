@@ -1,9 +1,9 @@
 "use client";
 import React, { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import MLP from "@/images/mlp.svg";
-import Team1 from "@/images/cpc.png";
-import Team2 from "@/images/nyhustlers.png";
+import MLP from "@/logos/mlp.svg";
+import Team1 from "@/logos/premier/cpc.png";
+import Team2 from "@/logos/premier/nyhustlers.png";
 import Image from "next/image";
 
 export default function MLPScoreboard() {
