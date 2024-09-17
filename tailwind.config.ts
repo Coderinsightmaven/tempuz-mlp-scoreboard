@@ -11,6 +11,7 @@ const config: Config = {
     extend: {
       colors: {
         mlp: { DEFAULT: "#F9623A" },
+        afw: { DEFAULT: "#f2f3f4"},
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
         card: {
