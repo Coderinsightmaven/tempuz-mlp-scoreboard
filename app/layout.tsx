@@ -15,7 +15,7 @@ const geistMono = localFont({
 
 export const metadata: Metadata = {
   title: "Tempuz MLP Score Board",
-  description: "Takes data from websocket and displays it in realtime on the scoreboards in stadium.",
+  description: "Takes data from websocket and displays it in realtime on the scoreboards on grandstand.",
 };
 
 export default function RootLayout({
