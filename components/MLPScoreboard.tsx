@@ -121,8 +121,6 @@ const defaultMatchData: MatchData = {
   eventID: '', court: '', divisionID: '', roundID: '', status: '', live: false,
 };
 
-const gameOrder: ('WD' | 'MD' | 'MX1' | 'MX2' | 'DB')[] = ['WD', 'MD', 'MX1', 'MX2', 'DB'];
-
 export default function MLPScoreboard() {
   const [matchData, setMatchData] = useState<MatchData>(defaultMatchData);
   const [currentGame, setCurrentGame] = useState<'WD' | 'MD' | 'MX1' | 'MX2' | 'DB'>('WD');
