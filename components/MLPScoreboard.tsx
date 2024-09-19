@@ -170,7 +170,7 @@ const defaultMatchData: MatchData = {
 
 export default function MLPScoreboard() {
   const [matchData, setMatchData] = useState<MatchData>(defaultMatchData);
-  const [currentGame, setCurrentGame] = useState<
+  const [currentGame] = useState<
     "WD" | "MD" | "MX1" | "MX2" | "DB"
   >("WD");
   const [animateScore1, setAnimateScore1] = useState(false);
