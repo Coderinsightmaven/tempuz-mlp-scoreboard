@@ -1,13 +1,11 @@
-'use client'
-
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import { initializeApp } from "firebase/app";
 import {
   getFirestore,
   collection,
   query,
   where,
-  onSnapshot,
+  onSnapshot
 } from "firebase/firestore";
 import Image, { StaticImageData } from "next/image";
 import MLPLogo from "@/logos/mlp.svg";
@@ -67,28 +65,20 @@ const teamLogos: { [key: string]: StaticImageData } = {
 const gameTypeDisplayNames: { [key: string]: string } = {
   WD: "Women's Doubles",
   MD: "Men's Doubles",
-  MX1: "Mixed Doubles",
-  MX2: "Mixed Doubles",
+  MX1: "Mixed Doubles 1",
+  MX2: "Mixed Doubles 2",
   DB: "Dream Breaker",
 };
 
 // Interfaces
-interface BaseGameData {
+interface GameData {
   team1Score: number;
   team2Score: number;
   team1Player1: string;
   team1Player2: string;
   team2Player1: string;
   team2Player2: string;
-  gameType: "WD" | "MD" | "MX1" | "MX2" | "DB";
-}
-
-interface GameData extends BaseGameData {
   winner: number | string;
-}
-
-interface DreamBreakerData extends BaseGameData {
-  winner: string;
 }
 
 interface MatchData {
@@ -96,7 +86,11 @@ interface MatchData {
   MD: GameData;
   MX1: GameData;
   MX2: GameData;
-  DB: DreamBreakerData;
+  DB: {
+    team1Score: number;
+    team2Score: number;
+    winner: string;
+  };
   team1: string;
   team2: string;
   team1Score: number;
@@ -112,29 +106,12 @@ interface MatchData {
 }
 
 // Default data
-const defaultGameData: GameData = {
-  team1Player1: "",
-  team1Player2: "",
-  team2Player1: "",
-  team2Player2: "",
-  team1Score: 0,
-  team2Score: 0,
-  winner: "-",
-  gameType: "WD",
-};
-
-const defaultDreamBreakerData: DreamBreakerData = {
-  ...defaultGameData,
-  winner: "-",
-  gameType: "DB",
-};
-
 const defaultMatchData: MatchData = {
-  WD: { ...defaultGameData, gameType: "WD" },
-  MD: { ...defaultGameData, gameType: "MD" },
-  MX1: { ...defaultGameData, gameType: "MX1" },
-  MX2: { ...defaultGameData, gameType: "MX2" },
-  DB: { ...defaultDreamBreakerData },
+  WD: { team1Score: 0, team2Score: 0, team1Player1: "", team1Player2: "", team2Player1: "", team2Player2: "", winner: "-" },
+  MD: { team1Score: 0, team2Score: 0, team1Player1: "", team1Player2: "", team2Player1: "", team2Player2: "", winner: "-" },
+  MX1: { team1Score: 0, team2Score: 0, team1Player1: "", team1Player2: "", team2Player1: "", team2Player2: "", winner: "-" },
+  MX2: { team1Score: 0, team2Score: 0, team1Player1: "", team1Player2: "", team2Player1: "", team2Player2: "", winner: "-" },
+  DB: { team1Score: 0, team2Score: 0, winner: "-" },
   team1: "",
   team2: "",
   team1Score: 0,
@@ -159,6 +136,7 @@ interface MLPScoreboardProps {
 
 export default function MLPScoreboard({ width, height, eventId, courtId }: MLPScoreboardProps) {
   const [matchData, setMatchData] = useState<MatchData>(defaultMatchData);
+  const [currentGame, setCurrentGame] = useState<"WD" | "MD" | "MX1" | "MX2" | "DB">("WD");
   const [isLoading, setIsLoading] = useState(true);
 
   // Calculate scale based on provided dimensions
@@ -185,11 +163,36 @@ export default function MLPScoreboard({ width, height, eventId, courtId }: MLPSc
   const logoSize = 80 * scale;
   const mlpLogoSize = 50 * scale;
 
-  // Update match data
-  const updateMatchData = useCallback((data: MatchData) => {
-    setMatchData(data);
-    setIsLoading(false);
-  }, []);
+  // Helper functions
+  const getCurrentGameData = (): GameData => {
+    return currentGame === "DB" 
+      ? { ...matchData.DB, team1Player1: "", team1Player2: "", team2Player1: "", team2Player2: "" } as GameData
+      : matchData[currentGame];
+  };
+
+  const getTeamLogo = (teamName: string): StaticImageData => {
+    return teamLogos[teamName] || MLPLogo;
+  };
+
+  const getGameTypeDisplayName = (gameType: "WD" | "MD" | "MX1" | "MX2" | "DB") => {
+    return gameTypeDisplayNames[gameType] || gameType;
+  };
+
+  const determineCurrentGame = (data: MatchData): "WD" | "MD" | "MX1" | "MX2" | "DB" => {
+    const games: ("WD" | "MD" | "MX1" | "MX2" | "DB")[] = ["WD", "MD", "MX1", "MX2", "DB"];
+    for (const game of games) {
+      if (game === "DB") {
+        if (data.DB.team1Score > 0 || data.DB.team2Score > 0) {
+          return "DB";
+        }
+        return games[games.indexOf(game) - 1];
+      }
+      if (data[game].team1Score === 0 && data[game].team2Score === 0) {
+        return games[games.indexOf(game) - 1];
+      }
+    }
+    return "WD"; // Default to WD if all games have scores
+  };
 
   // Set up Firebase listeners
   useEffect(() => {
@@ -205,7 +208,10 @@ export default function MLPScoreboard({ width, height, eventId, courtId }: MLPSc
         snapshot.docChanges().forEach((change) => {
           if (change.type === "added" || change.type === "modified") {
             console.log(`${change.type === "added" ? "New" : "Modified"} live match in ${collectionName}:`, change.doc.data());
-            updateMatchData(change.doc.data() as MatchData);
+            const newMatchData = change.doc.data() as MatchData;
+            setMatchData(newMatchData);
+            setCurrentGame(determineCurrentGame(newMatchData));
+            setIsLoading(false);
           }
           if (change.type === "removed") {
             console.log(`Removed live match in ${collectionName}:`, change.doc.data());
@@ -227,22 +233,7 @@ export default function MLPScoreboard({ width, height, eventId, courtId }: MLPSc
       unsubscribeMlpMatches();
       unsubscribeMlpLiveMatches();
     };
-  }, [eventId, courtId, updateMatchData]);
-
-  // Helper functions
-  const getCurrentGameData = (): BaseGameData => {
-    const gameTypes: ("WD" | "MD" | "MX1" | "MX2" | "DB")[] = ["WD", "MD", "MX1", "MX2", "DB"];
-    const currentGame = gameTypes.find(game => matchData[game].team1Score > 0 || matchData[game].team2Score > 0) || "WD";
-    return matchData[currentGame] || (currentGame === "DB" ? defaultDreamBreakerData : defaultGameData);
-  };
-
-  const getTeamLogo = (teamName: string): StaticImageData => {
-    return teamLogos[teamName] || MLPLogo;
-  };
-
-  const getGameTypeDisplayName = (gameType: "WD" | "MD" | "MX1" | "MX2" | "DB") => {
-    return gameTypeDisplayNames[gameType] || gameType;
-  };
+  }, [eventId, courtId]);
 
   // Loading state
   if (isLoading) {
@@ -272,15 +263,13 @@ export default function MLPScoreboard({ width, height, eventId, courtId }: MLPSc
     );
   }
 
-  const currentGameData = getCurrentGameData();
-
   // Render component
   return (
     <div style={containerStyle}>
       <div className="flex justify-between items-center w-full">
         <div className="flex-1 flex justify-center">
           <div style={{ fontSize: `${36 * scale}px` }} className="font-bold text-mlp">
-            {currentGameData.team1Score}
+            {getCurrentGameData().team1Score}
           </div>
         </div>
         <div className="flex-1 flex justify-center">
@@ -294,13 +283,13 @@ export default function MLPScoreboard({ width, height, eventId, courtId }: MLPSc
         </div>
         <div className="flex-1 flex justify-center">
           <div style={{ fontSize: `${36 * scale}px` }} className="font-bold text-mlp">
-            {currentGameData.team2Score}
+            {getCurrentGameData().team2Score}
           </div>
         </div>
       </div>
 
       <div className="text-center" style={{ fontSize: `${14 * scale}px` }}>
-        <div>{getGameTypeDisplayName(currentGameData.gameType)}</div>
+        <div>{getGameTypeDisplayName(currentGame)}</div>
         <div style={{ fontSize: `${12 * scale}px` }} className="text-gray-400">Team Score</div>
       </div>
 
@@ -332,11 +321,21 @@ export default function MLPScoreboard({ width, height, eventId, courtId }: MLPSc
 
       <div className="flex justify-between w-full" style={{ fontSize: `${12 * scale}px` }}>
         <div className="w-1/2 text-center">
-          <div className="truncate">{`${currentGameData.team1Player1} / ${currentGameData.team1Player2}`}</div>
+          <div className="truncate">
+            {currentGame !== "DB" 
+              ? `${getCurrentGameData().team1Player1} / ${getCurrentGameData().team1Player2}`
+              : "Dream Breaker"
+            }
+          </div>
           <div className="text-blue-500 truncate">{matchData.team1}</div>
         </div>
         <div className="w-1/2 text-center">
-          <div className="truncate">{`${currentGameData.team2Player1} / ${currentGameData.team2Player2}`}</div>
+          <div className="truncate">
+            {currentGame !== "DB"
+              ? `${getCurrentGameData().team2Player1} / ${getCurrentGameData().team2Player2}`
+              : "Dream Breaker"
+            }
+          </div>
           <div className="text-blue-500 truncate">{matchData.team2}</div>
         </div>
       </div>
