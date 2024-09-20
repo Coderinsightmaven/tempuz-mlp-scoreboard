@@ -78,13 +78,13 @@ interface GameData {
   team1Player2: string;
   team2Player1: string;
   team2Player2: string;
-  winner: number | string;
+  winner: string; // Changed to 'string'
 }
 
 interface DBGameData {
   team1Score: number;
   team2Score: number;
-  winner: string;
+  winner: string; // Changed to 'string'
 }
 
 interface MatchData {
@@ -196,20 +196,48 @@ export default function MLPScoreboard({ width, height, eventId, courtId }: MLPSc
     return gameTypeDisplayNames[gameType] || gameType;
   };
 
+  // Determine the current game based on match data
   const determineCurrentGame = (data: MatchData): GameType => {
     const games: GameType[] = ['WD', 'MD', 'MX1', 'MX2', 'DB'];
-    for (const game of games) {
-      if (game === 'DB') {
-        if (data.DB.team1Score > 0 || data.DB.team2Score > 0) {
-          return 'DB';
-        }
-        return games[games.indexOf(game) - 1];
-      }
-      if (data[game].team1Score === 0 && data[game].team2Score === 0) {
-        return games[games.indexOf(game) - 1];
+    for (let i = 0; i < games.length; i++) {
+      const game = games[i];
+      if (data[game].winner === "-") {
+        return game;
       }
     }
-    return 'WD'; // Default to WD if all games have scores
+    // If all games have a winner, return 'DB' if applicable
+    return 'DB';
+  };
+
+  // Helper function to determine if the match is over
+  const isMatchOver = (data: MatchData): boolean => {
+    const games: GameType[] = ['WD', 'MD', 'MX1', 'MX2'];
+    let team1Wins = 0;
+    let team2Wins = 0;
+
+    for (const game of games) {
+      const winner = data[game]?.winner;
+      if (winner === '1') {
+        team1Wins++;
+      } else if (winner === '2') {
+        team2Wins++;
+      }
+    }
+
+    // If one team has won 3 games, the match is over
+    if (team1Wins >= 3 || team2Wins >= 3) {
+      return true;
+    }
+
+    // If tied at 2-2, check the Dream Breaker (DB) winner
+    if (team1Wins === 2 && team2Wins === 2) {
+      const dbWinner = data.DB?.winner;
+      if (dbWinner === '1' || dbWinner === '2') {
+        return true;
+      }
+    }
+
+    return false;
   };
 
   // Set up Firebase listeners
@@ -222,24 +250,43 @@ export default function MLPScoreboard({ width, height, eventId, courtId }: MLPSc
         where("live", "==", true)
       );
 
-      return onSnapshot(q, (snapshot) => {
-        snapshot.docChanges().forEach((change) => {
-          if (change.type === "added" || change.type === "modified") {
-            console.log(`${change.type === "added" ? "New" : "Modified"} live match in ${collectionName}:`, change.doc.data());
-            const newMatchData = change.doc.data() as MatchData;
-            setMatchData(newMatchData);
-            setCurrentGame(determineCurrentGame(newMatchData));
-            setIsLoading(false);
-          }
-          if (change.type === "removed") {
-            console.log(`Removed live match in ${collectionName}:`, change.doc.data());
-            // Handle removed documents if necessary
-          }
-        });
-      }, (error) => {
-        console.error(`Error in ${collectionName} listener:`, error);
-        setIsLoading(false);
-      });
+      return onSnapshot(
+        q,
+        (snapshot) => {
+          snapshot.docChanges().forEach((change) => {
+            if (change.type === "added" || change.type === "modified") {
+              console.log(
+                `${change.type === "added" ? "New" : "Modified"} live match in ${collectionName}:`,
+                change.doc.data()
+              );
+              const newMatchData = change.doc.data() as MatchData;
+
+              // Normalize winner fields to strings
+              const games: GameType[] = ['WD', 'MD', 'MX1', 'MX2', 'DB'];
+              games.forEach((game) => {
+                if (newMatchData[game]?.winner !== undefined) {
+                  newMatchData[game].winner = String(newMatchData[game].winner);
+                }
+              });
+
+              setMatchData(newMatchData);
+              setCurrentGame(determineCurrentGame(newMatchData));
+              setIsLoading(false);
+            }
+            if (change.type === "removed") {
+              console.log(`Removed live match in ${collectionName}:`, change.doc.data());
+              // Reset matchData
+              setMatchData(defaultMatchData);
+              setCurrentGame('WD');
+              setIsLoading(true);
+            }
+          });
+        },
+        (error) => {
+          console.error(`Error in ${collectionName} listener:`, error);
+          setIsLoading(false);
+        }
+      );
     };
 
     const unsubscribeMlpMatches = monitorLiveMatches('mlpmatches');
@@ -252,6 +299,19 @@ export default function MLPScoreboard({ width, height, eventId, courtId }: MLPSc
       unsubscribeMlpLiveMatches();
     };
   }, [eventId, courtId]);
+
+  // Monitor matchData to check if the match is over
+  useEffect(() => {
+    if (!isLoading && isMatchOver(matchData)) {
+      console.log('Match is over.');
+      // Reset matchData
+      setMatchData(defaultMatchData);
+      // Reset currentGame
+      setCurrentGame('WD');
+      // Optionally, set isLoading to true while we wait for the next match
+      setIsLoading(true);
+    }
+  }, [matchData, isLoading]);
 
   // Loading state
   if (isLoading) {
@@ -308,7 +368,7 @@ export default function MLPScoreboard({ width, height, eventId, courtId }: MLPSc
 
       <div className="text-center" style={{ fontSize: `${14 * scale}px` }}>
         <div>{getGameTypeDisplayName(currentGame)}</div>
-        <div style={{ fontSize: `${12 * scale}px` }} className="text-gray-400">Team Score</div>
+        <div style={{ fontSize: `${12 * scale}px` }} className="text-gray-400">Game Score</div>
       </div>
 
       <div className="flex justify-center items-center w-full">
@@ -338,21 +398,21 @@ export default function MLPScoreboard({ width, height, eventId, courtId }: MLPSc
       </div>
 
       <div className="flex justify-between w-full" style={{ fontSize: `${11 * scale}px` }}>
-  <div className="w-1/2 text-center overflow-hidden whitespace-nowrap text-ellipsis">
-    {currentGame !== "DB" && 'team1Player1' in getCurrentGameData()
-      ? `${(getCurrentGameData() as GameData).team1Player1} / ${(getCurrentGameData() as GameData).team1Player2}`
-      : ""
-    }
-    <div className="text-blue-500">{matchData.team1}</div>
-  </div>
-  <div className="w-1/2 text-center overflow-hidden whitespace-nowrap text-ellipsis">
-    {currentGame !== "DB" && 'team2Player1' in getCurrentGameData()
-      ? `${(getCurrentGameData() as GameData).team2Player1} / ${(getCurrentGameData() as GameData).team2Player2}`
-      : ""
-    }
-    <div className="text-blue-500">{matchData.team2}</div>
-  </div>
-</div>
+        <div className="w-1/2 text-center overflow-hidden whitespace-nowrap text-ellipsis">
+          {currentGame !== "DB" && 'team1Player1' in getCurrentGameData()
+            ? `${(getCurrentGameData() as GameData).team1Player1} / ${(getCurrentGameData() as GameData).team1Player2}`
+            : ""
+          }
+          <div className="text-blue-500">{matchData.team1}</div>
+        </div>
+        <div className="w-1/2 text-center overflow-hidden whitespace-nowrap text-ellipsis">
+          {currentGame !== "DB" && 'team2Player1' in getCurrentGameData()
+            ? `${(getCurrentGameData() as GameData).team2Player1} / ${(getCurrentGameData() as GameData).team2Player2}`
+            : ""
+          }
+          <div className="text-blue-500">{matchData.team2}</div>
+        </div>
+      </div>
     </div>
   );
 }
