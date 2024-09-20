@@ -149,7 +149,12 @@ const defaultMatchData: MatchData = {
   live: false,
 };
 
-export default function MLPScoreboard() {
+interface MLPScoreboardProps {
+  width: number;
+  height: number;
+}
+
+export default function MLPScoreboard({ width, height }: MLPScoreboardProps) {
   const [matchData, setMatchData] = useState<MatchData>(defaultMatchData);
   const [currentGame] = useState<"WD" | "MD" | "MX1" | "MX2" | "DB">("WD");
   const [animateScore1, setAnimateScore1] = useState(false);
@@ -157,6 +162,22 @@ export default function MLPScoreboard() {
   const [prevScore1, setPrevScore1] = useState(0);
   const [prevScore2, setPrevScore2] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+
+  const containerStyle: React.CSSProperties = {
+    width: `${width}px`,
+    height: `${height}px`,
+    backgroundColor: "#111827", // bg-gray-900
+    color: "white",
+    overflow: "hidden",
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "space-between",
+    padding: "4px",
+    fontSize: `${Math.min(width, height) / 32}px`, // Adjust base font size
+  };
+
+  const logoSize = Math.min(width, height) / 3; // Adjust logo size
+  const mlpSize = Math.min(width, height) / 5; // Adjust MLP logo size
 
   const updateMatchData = useCallback(
     (data: MatchData) => {
@@ -197,7 +218,7 @@ export default function MLPScoreboard() {
       q,
       (snapshot) => {
         if (!snapshot.empty) {
-          const doc = snapshot.docs[0]; 
+          const doc = snapshot.docs[0];
           const data = doc.data() as MatchData;
           updateMatchData(data);
           setIsLoading(false);
@@ -217,14 +238,18 @@ export default function MLPScoreboard() {
 
   const getCurrentGameData = (): BaseGameData => {
     const data = matchData[currentGame];
-    return data || (currentGame === "DB" ? defaultDreamBreakerData : defaultGameData);
+    return (
+      data || (currentGame === "DB" ? defaultDreamBreakerData : defaultGameData)
+    );
   };
 
   const getTeamLogo = (teamName: string): StaticImageData => {
     return teamLogos[teamName] || MLPLogo;
   };
 
-  const getGameTypeDisplayName = (gameType: "WD" | "MD" | "MX1" | "MX2" | "DB") => {
+  const getGameTypeDisplayName = (
+    gameType: "WD" | "MD" | "MX1" | "MX2" | "DB"
+  ) => {
     return gameTypeDisplayNames[gameType] || gameType;
   };
 
@@ -247,53 +272,96 @@ export default function MLPScoreboard() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-full">
-        <svg className="animate-spin h-8 w-8 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+      <div style={containerStyle} className="flex items-center justify-center">
+        <svg
+          className="animate-spin h-8 w-8 text-blue-500"
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+        >
+          <circle
+            className="opacity-25"
+            cx="12"
+            cy="12"
+            r="10"
+            stroke="currentColor"
+            strokeWidth="4"
+          ></circle>
+          <path
+            className="opacity-75"
+            fill="currentColor"
+            d="M4 12a8 8 0 018-8v8H4z"
+          ></path>
         </svg>
       </div>
     );
   }
 
   return (
-    <div className="w-full h-full flex flex-col items-center justify-between text-white bg-gray-900 p-2">
+    <div style={containerStyle}>
       <div className="flex justify-between items-center w-full">
-        <div className={`text-5xl font-bold w-1/3 text-right text-mlp pr-2 transition-all duration-1000 ease-in-out ${animateScore1 ? "transform scale-110" : ""}`}>
-          {animateScore1 ? prevScore1 : getCurrentGameData().team1Score}
+        <div className="flex-1 flex justify-center">
+          <div className="text-3xl font-bold text-mlp">
+            {getCurrentGameData().team1Score}
+          </div>
         </div>
-        <div className="w-1/3 flex justify-center">
-          <Image src={MLPLogo} alt="MLP Logo" width={50} height={40} className="object-contain" />
+        <div className="flex-1 flex justify-center">
+          <Image
+            src={MLPLogo}
+            alt="MLP Logo"
+            width={mlpSize * 1.5}
+            height={mlpSize * 1.5}
+            className="object-contain"
+          />
         </div>
-        <div className={`text-5xl font-bold w-1/3 text-left pl-2 text-mlp transition-all duration-1000 ease-in-out ${animateScore2 ? "transform scale-110" : ""}`}>
-          {animateScore2 ? prevScore2 : getCurrentGameData().team2Score}
-        </div>
-      </div>
-      
-      <div className="text-sm mb-1">{getGameTypeDisplayName(currentGame)}</div>
-      
-      <div className="flex justify-center items-center w-full mb-1">
-        <div className="flex items-center justify-end w-1/3">
-          <Image src={getTeamLogo(matchData.team1)} alt={`${matchData.team1} Logo`} width={40} height={20} className="object-contain mr-1" />
-        </div>
-        <div className="flex items-center justify-center w-1/3">
-          <span className="text-xl font-semibold text-mlp mr-1">{matchData.team1Score}</span>
-          <div className="text-xl font-semibold mx-1">-</div>
-          <span className="text-xl font-semibold text-mlp ml-1">{matchData.team2Score}</span>
-        </div>
-        <div className="flex items-center justify-start w-1/3">
-          <Image src={getTeamLogo(matchData.team2)} alt={`${matchData.team2} Logo`} width={40} height={20} className="object-contain ml-1" />
+        <div className="flex-1 flex justify-center">
+          <div className="text-3xl font-bold text-mlp">
+            {getCurrentGameData().team2Score}
+          </div>
         </div>
       </div>
 
+      <div className="text-center text-sm">
+        <div>{getGameTypeDisplayName(currentGame)}</div>
+        <div className="text-xs text-gray-400">Team Score</div>
+      </div>
+
+      <div className="flex justify-center items-center w-full">
+        <Image
+          src={getTeamLogo(matchData.team1)}
+          alt={`${matchData.team1} Logo`}
+          width={logoSize}
+          height={logoSize}
+          className="object-contain"
+        />
+        <span className="text-xl font-semibold text-orange-500">
+          {matchData.team1Score}
+        </span>
+        <div className="text-xl font-semibold mx-2">-</div>
+        <span className="text-xl font-semibold text-orange-500">
+          {matchData.team2Score}
+        </span>
+        <Image
+          src={getTeamLogo(matchData.team2)}
+          alt={`${matchData.team2} Logo`}
+          width={logoSize}
+          height={logoSize}
+          className="object-contain mr-2"
+        />
+      </div>
+
       <div className="flex justify-between w-full text-xs">
-        <div className="w-1/2 flex flex-col items-center px-1">
-          <h1 className="font-bold text-center truncate w-full">{`${getCurrentGameData().team1Player1} / ${getCurrentGameData().team1Player2}`}</h1>
-          <h2 className="text-blue-500 text-center truncate w-full">{matchData.team1}</h2>
+        <div className="w-1/2 text-center">
+          <div className="truncate">{`${getCurrentGameData().team1Player1} / ${
+            getCurrentGameData().team1Player2
+          }`}</div>
+          <div className="text-blue-500 truncate">{matchData.team1}</div>
         </div>
-        <div className="w-1/2 flex flex-col items-center px-1">
-          <h1 className="font-bold text-center truncate w-full">{`${getCurrentGameData().team2Player1} / ${getCurrentGameData().team2Player2}`}</h1>
-          <h2 className="text-blue-500 text-center truncate w-full">{matchData.team2}</h2>
+        <div className="w-1/2 text-center">
+          <div className="truncate">{`${getCurrentGameData().team2Player1} / ${
+            getCurrentGameData().team2Player2
+          }`}</div>
+          <div className="text-blue-500 truncate">{matchData.team2}</div>
         </div>
       </div>
     </div>

@@ -1,19 +1,24 @@
+"use client"
+
 import MLPScoreboard from '@/components/MLPScoreboard';
+import ResolutionInput from '@/components/ResolutionInput';
+import { useState } from 'react';
 
 export default function Home() {
+  const [resolution, setResolution] = useState({ width: 1920, height: 1080 });
+
+  const handleResolutionChange = (width: number, height: number) => {
+    setResolution({ width, height });
+  };
+
   return (
-    <main className="flex items-start justify-start p-0 overflow-hidden" style={{ width: '384px', height: '256px' }}>
-      <div
-        className="origin-top-left"
-        style={{
-          transform: 'scale(0.133)', // Scale down the component proportionally to fit within 256x385
-          transformOrigin: 'top left',
-          width: '100%',
-          height: '100%',
-        }}
-      >
-        <MLPScoreboard />
+    <div>
+      {/* Your existing app content */}
+      <div style={{ width: resolution.width, height: resolution.height }}>
+        <MLPScoreboard width={resolution.width} height={resolution.height} />
       </div>
-    </main>
+      
+      <ResolutionInput onResolutionChange={handleResolutionChange} />
+    </div>
   );
 }
