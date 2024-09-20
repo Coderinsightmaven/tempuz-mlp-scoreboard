@@ -320,11 +320,11 @@ export default function MLPScoreboard({ width, height, eventId, courtId }: MLPSc
             height={logoSize}
             className="object-contain"
           />
-          <span style={{ fontSize: `${24 * scale}px` }} className="font-semibold text-orange-500">
+          <span style={{ fontSize: `${24 * scale}px` }} className="font-semibold text-mlp">
             {matchData.team1Score}
           </span>
           <div style={{ fontSize: `${24 * scale}px` }} className="font-semibold">-</div>
-          <span style={{ fontSize: `${24 * scale}px` }} className="font-semibold text-orange-500">
+          <span style={{ fontSize: `${24 * scale}px` }} className="font-semibold text-mlp">
             {matchData.team2Score}
           </span>
           <Image
