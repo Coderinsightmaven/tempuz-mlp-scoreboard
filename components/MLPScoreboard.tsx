@@ -163,21 +163,27 @@ export default function MLPScoreboard({ width, height }: MLPScoreboardProps) {
   const [prevScore2, setPrevScore2] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
 
+  const baseWidth = 384;
+  const baseHeight = 256;
+  const scaleX = width / baseWidth;
+  const scaleY = height / baseHeight;
+  const scale = Math.min(scaleX, scaleY);
+
   const containerStyle: React.CSSProperties = {
     width: `${width}px`,
     height: `${height}px`,
-    backgroundColor: "#111827", // bg-gray-900
+    backgroundColor: "#111827",
     color: "white",
     overflow: "hidden",
     display: "flex",
     flexDirection: "column",
     justifyContent: "space-between",
-    padding: "4px",
-    fontSize: `${Math.min(width, height) / 32}px`, // Adjust base font size
+    padding: `${4 * scale}px`,
+    fontSize: `${12 * scale}px`, // Base font size
   };
 
-  const logoSize = Math.min(width, height) / 3; // Adjust logo size
-  const mlpSize = Math.min(width, height) / 5; // Adjust MLP logo size
+  const logoSize = 80 * scale; // Adjust logo size
+  const mlpLogoSize = 50 * scale; // Adjust MLP logo size
 
   const updateMatchData = useCallback(
     (data: MatchData) => {
@@ -301,7 +307,7 @@ export default function MLPScoreboard({ width, height }: MLPScoreboardProps) {
     <div style={containerStyle}>
       <div className="flex justify-between items-center w-full">
         <div className="flex-1 flex justify-center">
-          <div className="text-3xl font-bold text-mlp">
+          <div style={{ fontSize: `${36 * scale}px` }} className="font-bold text-mlp">
             {getCurrentGameData().team1Score}
           </div>
         </div>
@@ -309,21 +315,21 @@ export default function MLPScoreboard({ width, height }: MLPScoreboardProps) {
           <Image
             src={MLPLogo}
             alt="MLP Logo"
-            width={mlpSize * 1.5}
-            height={mlpSize * 1.5}
+            width={mlpLogoSize * 1.5}
+            height={mlpLogoSize * 1.5}
             className="object-contain"
           />
         </div>
         <div className="flex-1 flex justify-center">
-          <div className="text-3xl font-bold text-mlp">
+          <div style={{ fontSize: `${36 * scale}px` }} className="font-bold text-mlp">
             {getCurrentGameData().team2Score}
           </div>
         </div>
       </div>
 
-      <div className="text-center text-sm">
+      <div className="text-center" style={{ fontSize: `${14 * scale}px` }}>
         <div>{getGameTypeDisplayName(currentGame)}</div>
-        <div className="text-xs text-gray-400">Team Score</div>
+        <div style={{ fontSize: `${12 * scale}px` }} className="text-gray-400">Team Score</div>
       </div>
 
       <div className="flex justify-center items-center w-full">
@@ -334,11 +340,11 @@ export default function MLPScoreboard({ width, height }: MLPScoreboardProps) {
           height={logoSize}
           className="object-contain"
         />
-        <span className="text-xl font-semibold text-orange-500">
+        <span style={{ fontSize: `${24 * scale}px` }} className="font-semibold text-orange-500">
           {matchData.team1Score}
         </span>
-        <div className="text-xl font-semibold mx-2">-</div>
-        <span className="text-xl font-semibold text-orange-500">
+        <div style={{ fontSize: `${24 * scale}px` }} className="font-semibold mx-2">-</div>
+        <span style={{ fontSize: `${24 * scale}px` }} className="font-semibold text-orange-500">
           {matchData.team2Score}
         </span>
         <Image
@@ -350,7 +356,7 @@ export default function MLPScoreboard({ width, height }: MLPScoreboardProps) {
         />
       </div>
 
-      <div className="flex justify-between w-full text-xs">
+      <div className="flex justify-between w-full" style={{ fontSize: `${12 * scale}px` }}>
         <div className="w-1/2 text-center">
           <div className="truncate">{`${getCurrentGameData().team1Player1} / ${
             getCurrentGameData().team1Player2
