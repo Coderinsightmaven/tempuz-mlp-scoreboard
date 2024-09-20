@@ -324,7 +324,7 @@ export default function MLPScoreboard({ width, height, eventId, courtId }: MLPSc
           <div className="truncate">
             {currentGame !== "DB" 
               ? `${getCurrentGameData().team1Player1} / ${getCurrentGameData().team1Player2}`
-              : "Dream Breaker"
+              : ""
             }
           </div>
           <div className="text-blue-500 truncate">{matchData.team1}</div>
@@ -333,7 +333,7 @@ export default function MLPScoreboard({ width, height, eventId, courtId }: MLPSc
           <div className="truncate">
             {currentGame !== "DB"
               ? `${getCurrentGameData().team2Player1} / ${getCurrentGameData().team2Player2}`
-              : "Dream Breaker"
+              : ""
             }
           </div>
           <div className="text-blue-500 truncate">{matchData.team2}</div>
