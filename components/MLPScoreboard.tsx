@@ -346,11 +346,6 @@ export default function MLPScoreboard({ width, height, eventId, courtId }: MLPSc
     <div style={containerStyle}>
       <div className="flex justify-between items-center w-full">
         <div className="flex-1 flex justify-center">
-          <div style={{ fontSize: `${36 * scale}px` }} className="font-bold text-mlp">
-            {getCurrentGameData().team1Score}
-          </div>
-        </div>
-        <div className="flex-1 flex justify-center">
           <Image
             src={MLPLogo}
             alt="MLP Logo"
@@ -359,17 +354,21 @@ export default function MLPScoreboard({ width, height, eventId, courtId }: MLPSc
             className="object-contain"
           />
         </div>
-        <div className="flex-1 flex justify-center">
-          <div style={{ fontSize: `${36 * scale}px` }} className="font-bold text-mlp">
-            {getCurrentGameData().team2Score}
-          </div>
+      </div>
+      
+      <div className="flex justify-between items-center mt-2">
+        <div style={{ fontSize: `${36 * scale}px` }} className="font-bold text-mlp">
+          {getCurrentGameData().team1Score}
+        </div>
+        <div className="text-center">
+          <div style={{ fontSize: `${14 * scale}px` }}>{getGameTypeDisplayName(currentGame)}</div>
+          <div style={{ fontSize: `${12 * scale}px` }} className="text-gray-400">Game Score</div>
+        </div>
+        <div style={{ fontSize: `${36 * scale}px` }} className="font-bold text-mlp">
+          {getCurrentGameData().team2Score}
         </div>
       </div>
-
-      <div className="text-center" style={{ fontSize: `${14 * scale}px` }}>
-        <div>{getGameTypeDisplayName(currentGame)}</div>
-        <div style={{ fontSize: `${12 * scale}px` }} className="text-gray-400">Game Score</div>
-      </div>
+    
 
       <div className="flex justify-center items-center w-full">
         <div className="flex items-center space-x-4">
