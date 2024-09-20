@@ -5,7 +5,7 @@ import {
   collection,
   query,
   where,
-  onSnapshot
+  onSnapshot,
 } from "firebase/firestore";
 import Image, { StaticImageData } from "next/image";
 import MLPLogo from "@/logos/mlp.svg";
@@ -107,7 +107,7 @@ interface MatchData {
   live: boolean;
 }
 
-type GameType = 'WD' | 'MD' | 'MX1' | 'MX2' | 'DB';
+type GameType = "WD" | "MD" | "MX1" | "MX2" | "DB";
 
 // Default data
 const defaultGameData: GameData = {
@@ -117,13 +117,13 @@ const defaultGameData: GameData = {
   team1Player2: "",
   team2Player1: "",
   team2Player2: "",
-  winner: "-"
+  winner: "-",
 };
 
 const defaultDBGameData: DBGameData = {
   team1Score: 0,
   team2Score: 0,
-  winner: "-"
+  winner: "-",
 };
 
 const defaultMatchData: MatchData = {
@@ -154,10 +154,16 @@ interface MLPScoreboardProps {
   courtId: string;
 }
 
-export default function MLPScoreboard({ width, height, eventId, courtId }: MLPScoreboardProps) {
+export default function MLPScoreboard({
+  width,
+  height,
+  eventId,
+  courtId,
+}: MLPScoreboardProps) {
   const [matchData, setMatchData] = useState<MatchData>(defaultMatchData);
-  const [currentGame, setCurrentGame] = useState<GameType>('WD');
+  const [currentGame, setCurrentGame] = useState<GameType>("WD");
   const [isLoading, setIsLoading] = useState(true);
+  const [hasMatchData, setHasMatchData] = useState(false); // New state variable
 
   // Calculate scale based on provided dimensions
   const baseWidth = 384;
@@ -181,11 +187,14 @@ export default function MLPScoreboard({ width, height, eventId, courtId }: MLPSc
   };
 
   const logoSize = 80 * scale;
-  const mlpLogoSize = 50 * scale;
+  const mlpLogoSize = 70 * scale;
 
   // Helper functions
   const getCurrentGameData = (): GameData | DBGameData => {
-    return matchData[currentGame] || (currentGame === 'DB' ? defaultDBGameData : defaultGameData);
+    return (
+      matchData[currentGame] ||
+      (currentGame === "DB" ? defaultDBGameData : defaultGameData)
+    );
   };
 
   const getTeamLogo = (teamName: string): StaticImageData => {
@@ -198,7 +207,7 @@ export default function MLPScoreboard({ width, height, eventId, courtId }: MLPSc
 
   // Determine the current game based on match data
   const determineCurrentGame = (data: MatchData): GameType => {
-    const games: GameType[] = ['WD', 'MD', 'MX1', 'MX2', 'DB'];
+    const games: GameType[] = ["WD", "MD", "MX1", "MX2", "DB"];
     for (let i = 0; i < games.length; i++) {
       const game = games[i];
       if (data[game].winner === "-") {
@@ -206,20 +215,20 @@ export default function MLPScoreboard({ width, height, eventId, courtId }: MLPSc
       }
     }
     // If all games have a winner, return 'DB' if applicable
-    return 'DB';
+    return "DB";
   };
 
   // Helper function to determine if the match is over
   const isMatchOver = (data: MatchData): boolean => {
-    const games: GameType[] = ['WD', 'MD', 'MX1', 'MX2'];
+    const games: GameType[] = ["WD", "MD", "MX1", "MX2"];
     let team1Wins = 0;
     let team2Wins = 0;
 
     for (const game of games) {
       const winner = data[game]?.winner;
-      if (winner === '1') {
+      if (winner === "1") {
         team1Wins++;
-      } else if (winner === '2') {
+      } else if (winner === "2") {
         team2Wins++;
       }
     }
@@ -232,7 +241,7 @@ export default function MLPScoreboard({ width, height, eventId, courtId }: MLPSc
     // If tied at 2-2, check the Dream Breaker (DB) winner
     if (team1Wins === 2 && team2Wins === 2) {
       const dbWinner = data.DB?.winner;
-      if (dbWinner === '1' || dbWinner === '2') {
+      if (dbWinner === "1" || dbWinner === "2") {
         return true;
       }
     }
@@ -253,34 +262,51 @@ export default function MLPScoreboard({ width, height, eventId, courtId }: MLPSc
       return onSnapshot(
         q,
         (snapshot) => {
-          snapshot.docChanges().forEach((change) => {
-            if (change.type === "added" || change.type === "modified") {
-              console.log(
-                `${change.type === "added" ? "New" : "Modified"} live match in ${collectionName}:`,
-                change.doc.data()
-              );
-              const newMatchData = change.doc.data() as MatchData;
+          if (snapshot.empty) {
+            console.log(`No live matches in ${collectionName}`);
+            setIsLoading(false);
+            setHasMatchData(false);
+            // Reset matchData and currentGame
+            setMatchData(defaultMatchData);
+            setCurrentGame("WD");
+          } else {
+            snapshot.docChanges().forEach((change) => {
+              if (change.type === "added" || change.type === "modified") {
+                console.log(
+                  `${
+                    change.type === "added" ? "New" : "Modified"
+                  } live match in ${collectionName}:`,
+                  change.doc.data()
+                );
+                const newMatchData = change.doc.data() as MatchData;
 
-              // Normalize winner fields to strings
-              const games: GameType[] = ['WD', 'MD', 'MX1', 'MX2', 'DB'];
-              games.forEach((game) => {
-                if (newMatchData[game]?.winner !== undefined) {
-                  newMatchData[game].winner = String(newMatchData[game].winner);
-                }
-              });
+                // Normalize winner fields to strings
+                const games: GameType[] = ["WD", "MD", "MX1", "MX2", "DB"];
+                games.forEach((game) => {
+                  if (newMatchData[game]?.winner !== undefined) {
+                    newMatchData[game].winner = String(
+                      newMatchData[game].winner
+                    );
+                  }
+                });
 
-              setMatchData(newMatchData);
-              setCurrentGame(determineCurrentGame(newMatchData));
-              setIsLoading(false);
-            }
-            if (change.type === "removed") {
-              console.log(`Removed live match in ${collectionName}:`, change.doc.data());
-              // Reset matchData
-              setMatchData(defaultMatchData);
-              setCurrentGame('WD');
-              setIsLoading(true);
-            }
-          });
+                setMatchData(newMatchData);
+                setCurrentGame(determineCurrentGame(newMatchData));
+                setIsLoading(false);
+                setHasMatchData(true); // Indicate that we have match data
+              }
+              if (change.type === "removed") {
+                console.log(
+                  `Removed live match in ${collectionName}:`,
+                  change.doc.data()
+                );
+                // Reset matchData
+                setMatchData(defaultMatchData);
+                setCurrentGame("WD");
+                setHasMatchData(false); // Indicate that we no longer have match data
+              }
+            });
+          }
         },
         (error) => {
           console.error(`Error in ${collectionName} listener:`, error);
@@ -289,10 +315,12 @@ export default function MLPScoreboard({ width, height, eventId, courtId }: MLPSc
       );
     };
 
-    const unsubscribeMlpMatches = monitorLiveMatches('mlpmatches');
-    const unsubscribeMlpLiveMatches = monitorLiveMatches('mlpLiveMatches');
+    const unsubscribeMlpMatches = monitorLiveMatches("mlpmatches");
+    const unsubscribeMlpLiveMatches = monitorLiveMatches("mlpLiveMatches");
 
-    console.log(`Started monitoring live matches for event ${eventId} on court ${courtId}`);
+    console.log(
+      `Started monitoring live matches for event ${eventId} on court ${courtId}`
+    );
 
     return () => {
       unsubscribeMlpMatches();
@@ -303,13 +331,12 @@ export default function MLPScoreboard({ width, height, eventId, courtId }: MLPSc
   // Monitor matchData to check if the match is over
   useEffect(() => {
     if (!isLoading && isMatchOver(matchData)) {
-      console.log('Match is over.');
+      console.log("Match is over.");
       // Reset matchData
       setMatchData(defaultMatchData);
       // Reset currentGame
-      setCurrentGame('WD');
-      // Optionally, set isLoading to true while we wait for the next match
-      setIsLoading(true);
+      setCurrentGame("WD");
+      setHasMatchData(false); // Indicate that we no longer have match data
     }
   }, [matchData, isLoading]);
 
@@ -355,40 +382,70 @@ export default function MLPScoreboard({ width, height, eventId, courtId }: MLPSc
           />
         </div>
       </div>
-      
-      <div className="flex justify-between items-center mt-2">
-        <div style={{ fontSize: `${36 * scale}px` }} className="font-bold text-mlp">
-          {getCurrentGameData().team1Score}
-        </div>
-        <div className="text-center">
-          <div style={{ fontSize: `${14 * scale}px` }}>{getGameTypeDisplayName(currentGame)}</div>
-          <div style={{ fontSize: `${12 * scale}px` }} className="text-gray-400">Game Score</div>
-        </div>
-        <div style={{ fontSize: `${36 * scale}px` }} className="font-bold text-mlp">
-          {getCurrentGameData().team2Score}
-        </div>
-      </div>
-    
 
+      <div className="flex justify-center items-center mt-2 relative">
+  <div className="text-center px-4">
+    <div style={{ fontSize: `${14 * scale}px` }}>
+      {getGameTypeDisplayName(currentGame)}
+    </div>
+    <div
+      style={{ fontSize: `${12 * scale}px` }}
+      className="text-gray-400"
+    >
+      Game Score
+    </div>
+  </div>
+  <div
+    style={{ 
+      fontSize: `${36 * scale}px`, 
+      left: '15%', 
+      top: 'calc(50% - 11px)' 
+    }}
+    className="font-bold text-mlp absolute transform -translate-y-1/2"
+  >
+    {getCurrentGameData().team1Score}
+  </div>
+  <div
+    style={{ 
+      fontSize: `${36 * scale}px`, 
+      right: '15%', 
+      top: 'calc(50% - 11px)' 
+    }}
+    className="font-bold text-mlp absolute transform -translate-y-1/2"
+  >
+    {getCurrentGameData().team2Score}
+  </div>
+</div>
       <div className="flex justify-center items-center w-full">
         <div className="flex items-center space-x-4">
           <Image
             src={getTeamLogo(matchData.team1)}
-            alt={`${matchData.team1} Logo`}
+            alt={`${matchData.team1 || "MLP"} Logo`}
             width={logoSize}
             height={logoSize}
             className="object-contain"
           />
-          <span style={{ fontSize: `${24 * scale}px` }} className="font-semibold text-mlp">
+          <span
+            style={{ fontSize: `${24 * scale}px` }}
+            className="font-semibold text-mlp"
+          >
             {matchData.team1Score}
           </span>
-          <div style={{ fontSize: `${24 * scale}px` }} className="font-semibold">-</div>
-          <span style={{ fontSize: `${24 * scale}px` }} className="font-semibold text-mlp">
+          <div
+            style={{ fontSize: `${24 * scale}px` }}
+            className="font-semibold"
+          >
+            -
+          </div>
+          <span
+            style={{ fontSize: `${24 * scale}px` }}
+            className="font-semibold text-mlp"
+          >
             {matchData.team2Score}
           </span>
           <Image
             src={getTeamLogo(matchData.team2)}
-            alt={`${matchData.team2} Logo`}
+            alt={`${matchData.team2 || "MLP"} Logo`}
             width={logoSize}
             height={logoSize}
             className="object-contain"
@@ -396,19 +453,28 @@ export default function MLPScoreboard({ width, height, eventId, courtId }: MLPSc
         </div>
       </div>
 
-      <div className="flex justify-between w-full" style={{ fontSize: `${11 * scale}px` }}>
+      <div
+        className="flex justify-between w-full"
+        style={{ fontSize: `${11 * scale}px` }}
+      >
         <div className="w-1/2 text-center overflow-hidden whitespace-nowrap text-ellipsis">
-          {currentGame !== "DB" && 'team1Player1' in getCurrentGameData()
-            ? `${(getCurrentGameData() as GameData).team1Player1} / ${(getCurrentGameData() as GameData).team1Player2}`
-            : ""
-          }
+          {currentGame !== "DB" &&
+          "team1Player1" in getCurrentGameData() &&
+          hasMatchData
+            ? `${(getCurrentGameData() as GameData).team1Player1} / ${
+                (getCurrentGameData() as GameData).team1Player2
+              }`
+            : ""}
           <div className="text-blue-500">{matchData.team1}</div>
         </div>
         <div className="w-1/2 text-center overflow-hidden whitespace-nowrap text-ellipsis">
-          {currentGame !== "DB" && 'team2Player1' in getCurrentGameData()
-            ? `${(getCurrentGameData() as GameData).team2Player1} / ${(getCurrentGameData() as GameData).team2Player2}`
-            : ""
-          }
+          {currentGame !== "DB" &&
+          "team2Player1" in getCurrentGameData() &&
+          hasMatchData
+            ? `${(getCurrentGameData() as GameData).team2Player1} / ${
+                (getCurrentGameData() as GameData).team2Player2
+              }`
+            : ""}
           <div className="text-blue-500">{matchData.team2}</div>
         </div>
       </div>
