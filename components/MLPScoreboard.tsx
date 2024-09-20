@@ -157,10 +157,6 @@ interface MLPScoreboardProps {
 export default function MLPScoreboard({ width, height }: MLPScoreboardProps) {
   const [matchData, setMatchData] = useState<MatchData>(defaultMatchData);
   const [currentGame] = useState<"WD" | "MD" | "MX1" | "MX2" | "DB">("WD");
-  const [animateScore1, setAnimateScore1] = useState(false);
-  const [animateScore2, setAnimateScore2] = useState(false);
-  const [prevScore1, setPrevScore1] = useState(0);
-  const [prevScore2, setPrevScore2] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
 
   const baseWidth = 384;
@@ -185,29 +181,9 @@ export default function MLPScoreboard({ width, height }: MLPScoreboardProps) {
   const logoSize = 80 * scale; // Adjust logo size
   const mlpLogoSize = 50 * scale; // Adjust MLP logo size
 
-  const updateMatchData = useCallback(
-    (data: MatchData) => {
-      setMatchData((prevData) => {
-        const currentGameData = data[currentGame] as BaseGameData;
-        const prevGameData = prevData[currentGame] as BaseGameData;
-
-        if (currentGameData.team1Score !== prevGameData.team1Score) {
-          setAnimateScore1(true);
-          setPrevScore1(prevGameData.team1Score);
-          setTimeout(() => setAnimateScore1(false), 1000);
-        }
-
-        if (currentGameData.team2Score !== prevGameData.team2Score) {
-          setAnimateScore2(true);
-          setPrevScore2(prevGameData.team2Score);
-          setTimeout(() => setAnimateScore2(false), 1000);
-        }
-
-        return data;
-      });
-    },
-    [currentGame]
-  );
+  const updateMatchData = useCallback((data: MatchData) => {
+    setMatchData(data);
+  }, []);
 
   useEffect(() => {
     const eventId = "2024 MLP6";
@@ -257,23 +233,6 @@ export default function MLPScoreboard({ width, height }: MLPScoreboardProps) {
     gameType: "WD" | "MD" | "MX1" | "MX2" | "DB"
   ) => {
     return gameTypeDisplayNames[gameType] || gameType;
-  };
-
-  const renderPlayerNames = () => {
-    if (currentGame === "DB") {
-      return <div className="text-xl font-bold text-center">-</div>;
-    }
-    const gameData = getCurrentGameData();
-    return (
-      <>
-        <div className="w-1/2 flex flex-col items-center px-2">
-          <h1 className="text-xl font-bold text-center">{`${gameData.team1Player1} / ${gameData.team1Player2}`}</h1>
-        </div>
-        <div className="w-1/2 flex flex-col items-center px-2">
-          <h1 className="text-xl font-bold text-center">{`${gameData.team2Player1} / ${gameData.team2Player2}`}</h1>
-        </div>
-      </>
-    );
   };
 
   if (isLoading) {
