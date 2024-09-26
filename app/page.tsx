@@ -18,7 +18,7 @@ export default function Home() {
         <MLPScoreboard
           width={resolution.width}
           height={resolution.height}
-          eventId="2024 MLP6"
+          eventId="2024 MLP7"
           courtId="Grandstand"
         />
       </div>
