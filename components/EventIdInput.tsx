@@ -1,41 +1,44 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 
-interface ResolutionInputProps {
-  onResolutionChange: (width: number, height: number) => void;
+interface EventIdInputProps {
+  onEventIdChange: (eventId: string) => void;
+  initialEventId: string;
 }
 
-const ResolutionInput: React.FC<ResolutionInputProps> = ({ onResolutionChange }) => {
+const EventIdInput: React.FC<EventIdInputProps> = ({ onEventIdChange, initialEventId }) => {
   const form = useForm({
     defaultValues: {
-      resolution: '',
+      eventId: initialEventId,
     },
   });
 
-  const onSubmit = (data: { resolution: string }) => {
-    const [width, height] = data.resolution.split('x').map(Number);
-    if (width && height) {
-      onResolutionChange(width, height);
-    }
+  useEffect(() => {
+    // Update form value when initialEventId changes
+    form.setValue("eventId", initialEventId);
+  }, [initialEventId, form]);
+
+  const onSubmit = (data: { eventId: string }) => {
+    onEventIdChange(data.eventId);
   };
 
   return (
     <div className="p-4 bg-background/80 backdrop-blur-sm rounded-lg shadow-lg">
-      <h1 className='text-sm'>Enter Width x Height</h1>
+      <h1 className='text-sm'>Enter Event ID</h1>
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="flex space-x-2 ">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="flex space-x-2">
           <FormField
             control={form.control}
-            name="resolution"
+            name="eventId"
             render={({ field }) => (
               <FormItem>
                 <FormControl>
                   <Input 
                     {...field} 
-                    placeholder="Default: 384x254" 
+                    placeholder="e.g., 2024 MLP7" 
                     className="w-36"
                   />
                 </FormControl>
@@ -49,4 +52,4 @@ const ResolutionInput: React.FC<ResolutionInputProps> = ({ onResolutionChange })
   );
 };
 
-export default ResolutionInput;
+export default EventIdInput;
