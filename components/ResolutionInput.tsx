@@ -35,7 +35,7 @@ const ResolutionInput: React.FC<ResolutionInputProps> = ({ onResolutionChange })
                 <FormControl>
                   <Input 
                     {...field} 
-                    placeholder="Default: 384x254" 
+                    placeholder="Default: 384x256" 
                     className="w-36"
                   />
                 </FormControl>
